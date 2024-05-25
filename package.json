@@ -16,7 +16,10 @@
     "npm": ">=6.14.18"
   },
   "exports": {
-    ".": "./src/index.js",
+    ".": {
+      "import": "./src/index.js",
+      "require": "./cjs/index.cjs"
+    },
     "./controller.js": "./src/controller.js",
     "./controller": "./src/controller.js",
     "./middleware.js": "./src/middleware.js",
@@ -61,6 +64,7 @@
     "lint-staged": "^15.2.4",
     "minimist": "^1.2.8",
     "prettier": "^3.2.5",
+    "rollup": "^4.18.0",
     "supertest": "^7.0.0",
     "uglifyjs-webpack-plugin": "^2.2.0",
     "webpack-node-externals": "^3.0.0"
