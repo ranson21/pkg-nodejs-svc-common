@@ -19,10 +19,22 @@
       "import": "./src/index.js",
       "require": "./cjs/index.cjs"
     },
-    "./controller.js": "./src/controller.js",
-    "./controller": "./src/controller.js",
-    "./middleware.js": "./src/middleware.js",
-    "./middleware": "./src/middleware.js"
+    "./controller.js": {
+      "import": "./src/controller.js",
+      "require": "./cjs/controller.cjs"
+    },
+    "./controller": {
+      "import": "./src/controller.js",
+      "require": "./cjs/controller.cjs"
+    },
+    "./middleware.js": {
+      "import": "./src/middleware.js",
+      "require": "./cjs/middleware.cjs"
+    },
+    "./middleware": {
+      "import": "./src/middleware.js",
+      "require": "./cjs/middleware.cjs"
+    }
   },
   "author": "Abby Ranson",
   "license": "MIT",
