@@ -4,8 +4,8 @@ import cors from "cors";
 import { urlencoded, json } from "body-parser";
 
 // Local Package Dependencies
-import { MESSAGES } from "src/constants";
-import { newLogger } from "src/middleware";
+import { MESSAGES } from "./constants";
+import { newLogger } from "./middleware";
 
 /**
  * Configure an instance of the Express App with middleware, routes, and optional db

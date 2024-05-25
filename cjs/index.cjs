@@ -3,8 +3,94 @@
 var express = require('express');
 var cors = require('cors');
 var bodyParser = require('body-parser');
-var constants = require('src/constants');
-var middleware = require('src/middleware');
+var winston = require('winston');
+var expressWinston = require('express-winston');
+require('swagger-ui-express');
+require('yamljs');
+
+// Global constants
+const MESSAGES = {
+  STARTUP: "🚀 Server running at localhost:%port",
+  SHUTDOWN_START: "Shutting down... To force quit hit Ctrl+C again",
+  SHUTDOWN_COMPLETE: "✅ Successfully closed the server",
+  STARTUP_ERROR: "Error in server setup",
+};
+
+// NPM Module Dependencies
+
+/**
+ * Standard Logging Format
+ * @param {Object} options -- Log options including level and message
+ */
+const logFormatter = ({ level, timestamp, message, meta }) => {
+  // Start creating the message with the log level and timestamp
+  let msg = `${level} - [${timestamp}]: `;
+
+  // Attach route specific details
+  if (meta) {
+    // Attach the user if present
+    if (meta?.req?.user?.email) {
+      msg += `(${meta?.req.user?.email}) `;
+    }
+
+    // Attach the status code icon
+    switch (true) {
+      case meta?.res?.statusCode >= 400 && meta?.res?.statusCode <= 499:
+        msg += "🚫 ";
+        break;
+      case meta?.res?.statusCode >= 200 && meta?.res?.statusCode <= 299:
+        msg += "✅ ";
+        break;
+      case meta?.res?.statusCode >= 300 && meta?.res?.statusCode <= 399:
+        msg += "➡ ";
+        break;
+      case meta?.res?.statusCode >= 500:
+        msg += "❌ ";
+        break;
+    }
+
+    msg += `${meta?.res?.statusCode} - `;
+  }
+
+  // Attach the message at the end
+  msg += message;
+
+  // Return the formatted log message
+  return msg;
+};
+
+/**
+ * CreateLogger -- Creates an instance of the winston logger
+ * @returns {Object} -- App loggers
+ */
+const newLogger = () => {
+  const logger = {
+    transports: [
+      new winston.transports.Console({
+        format: winston.format.combine(
+          winston.format.colorize(),
+          winston.format.timestamp({ format: "MMM-DD-YYYY HH:mm:ss" }),
+          winston.format.printf(logFormatter),
+        ),
+      }),
+    ],
+    headerBlacklist: ["authorization", "cookie"],
+    level: "info",
+    requestWhitelist: ["user", "headers", "query", "originalUrl", "method"],
+  };
+
+  const log = winston.createLogger(logger);
+
+  // Return the different loggers
+  return {
+    log,
+    logMiddleware: (req, _, next) => {
+      req.logger = log;
+      next();
+    },
+    routeLogger: expressWinston.logger(logger),
+  };
+};
 
 // NPM Module dependencies
 
@@ -24,7 +110,7 @@ async function configure(router, environment) {
   app.use(cors({ origin: environment.CORS }));
 
   // Attach the logger
-  const { routeLogger, log, logMiddleware } = middleware.newLogger();
+  const { routeLogger, log, logMiddleware } = newLogger();
   app.use(logMiddleware);
   app.use(routeLogger);
 
@@ -42,9 +128,9 @@ async function configure(router, environment) {
  */
 function stop({ server, log }) {
   return () => {
-    log.info(constants.MESSAGES.SHUTDOWN_START);
+    log.info(MESSAGES.SHUTDOWN_START);
     server.close();
-    log.info(constants.MESSAGES.SHUTDOWN_COMPLETE);
+    log.info(MESSAGES.SHUTDOWN_COMPLETE);
   };
 }
 
@@ -55,11 +141,11 @@ function stop({ server, log }) {
 function listener(log, port) {
   return (err) => {
     if (err) {
-      log.info(constants.MESSAGES.STARTUP_ERROR);
+      log.info(MESSAGES.STARTUP_ERROR);
       return;
     }
 
-    log.info(constants.MESSAGES.STARTUP.replace("%port", port));
+    log.info(MESSAGES.STARTUP.replace("%port", port));
   };
 }
 
